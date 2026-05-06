@@ -515,7 +515,7 @@ function bindEvents() {
     }
   });
 
-  UI.heroPlay.addEventListener("click", () => playTitle(getHeroItem()));
+  UI.heroPlay.addEventListener("click", async () => await playTitle(getHeroItem()));
   UI.heroMore.addEventListener("click", () => openDetails(getHeroItem()));
   UI.heroWatchlist.addEventListener("click", () => toggleWatchlist(getHeroItem()));
 
@@ -556,7 +556,7 @@ function bindEvents() {
   UI.detailsOverlay.addEventListener("click", (event) => {
     if (event.target === UI.detailsOverlay) closeDetails();
   });
-  UI.detailsPlay.addEventListener("click", () => playTitle(getActiveDetails()));
+  UI.detailsPlay.addEventListener("click", async () => await playTitle(getActiveDetails()));
   UI.detailsWatchlist.addEventListener("click", () => toggleWatchlist(getActiveDetails()));
   UI.detailsLike.addEventListener("click", () => toggleLike(getActiveDetails()));
 
@@ -613,7 +613,7 @@ async function loadLiveCatalog(force = false) {
     return;
   }
 
-  setTmdbStatus("Refreshing live TMDB metadata...");
+  setTmdbStatus("Refreshing live metadata...");
 
   try {
     const [
@@ -624,22 +624,26 @@ async function loadLiveCatalog(force = false) {
       trendingTv,
       airingTodayTv,
       topRatedTv,
-      animeTv
+      animeTv,
+      jikanMovies,
+      jikanAiring
     ] = await Promise.all([
-      fetchTmdbList("trending/movie/day"),
-      fetchTmdbList("movie/now_playing", { region: tmdbConfig.region }),
-      fetchTmdbList("movie/popular", { region: tmdbConfig.region }),
-      fetchTmdbList("movie/top_rated", { region: tmdbConfig.region }),
-      fetchTmdbList("trending/tv/day"),
-      fetchTmdbList("tv/airing_today", { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Africa/Accra" }),
-      fetchTmdbList("tv/top_rated"),
-      fetchTmdbList("discover/tv", {
+      token ? fetchTmdbList("trending/movie/day") : Promise.resolve([]),
+      token ? fetchTmdbList("movie/now_playing", { region: tmdbConfig.region }) : Promise.resolve([]),
+      token ? fetchTmdbList("movie/popular", { region: tmdbConfig.region }) : Promise.resolve([]),
+      token ? fetchTmdbList("movie/top_rated", { region: tmdbConfig.region }) : Promise.resolve([]),
+      token ? fetchTmdbList("trending/tv/day") : Promise.resolve([]),
+      token ? fetchTmdbList("tv/airing_today", { timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Africa/Accra" }) : Promise.resolve([]),
+      token ? fetchTmdbList("tv/top_rated") : Promise.resolve([]),
+      token ? fetchTmdbList("discover/tv", {
         with_genres: "16",
         with_origin_country: "JP",
         sort_by: "first_air_date.desc",
         include_adult: "false",
         "first_air_date.lte": todayDate()
-      })
+      }) : Promise.resolve([]),
+      fetchJikanList("top/anime?type=movie&filter=bypopularity"),
+      fetchJikanList("top/anime?filter=airing")
     ]);
 
     const liveItems = mergeCatalogItems([
@@ -650,13 +654,15 @@ async function loadLiveCatalog(force = false) {
       ...trendingTv.map((item) => mapTmdbItem(item, "tv", ["trending"])),
       ...airingTodayTv.map((item) => mapTmdbItem(item, "tv", ["latest", "trending"])),
       ...topRatedTv.map((item) => mapTmdbItem(item, "tv", ["top"])),
-      ...animeTv.map((item) => mapTmdbItem(item, "tv", ["latest", "trending", "top"], ["Anime"]))
+      ...animeTv.map((item) => mapTmdbItem(item, "tv", ["latest", "trending", "top"], ["Anime"])),
+      ...jikanMovies.map((item) => mapJikanItem(item, ["trending", "top"])),
+      ...jikanAiring.map((item) => mapJikanItem(item, ["latest", "trending"]))
     ]);
 
     const updatedAt = Date.now();
     catalog = mergeCatalogItems(liveItems, cloneCatalog(fallbackCatalog));
     writeStorage(storageKeys.tmdbCache, { updatedAt, items: liveItems });
-    setTmdbStatus(`Live TMDB catalog refreshed. Last refresh: ${formatDateTime(updatedAt)}.`);
+    setTmdbStatus(token ? `Live catalog refreshed. Last refresh: ${formatDateTime(updatedAt)}.` : `Anime updated from MAL. (TMDB token missing for movies/TV).`);
     hydrateApp();
     showToast("Live catalog updated from TMDB.");
   } catch (error) {
@@ -736,6 +742,7 @@ function isAnimeResult(item) {
 
 async function fetchTmdb(path, params = {}) {
   const token = getTmdbToken();
+  if (!token) throw new Error("TMDB token missing.");
   const url = new URL(`${tmdbConfig.apiBase}/${path.replace(/^\/+/, "")}`);
   const headers = { Accept: "application/json" };
   const query = {
@@ -757,6 +764,64 @@ async function fetchTmdb(path, params = {}) {
   const response = await fetch(url, { headers });
   if (!response.ok) throw new Error(`TMDB request failed: ${response.status}`);
   return response.json();
+}
+
+async function fetchJikanList(path) {
+  try {
+    const data = await fetchJikan(path);
+    return Array.isArray(data.data) ? data.data.slice(0, 20) : [];
+  } catch (error) {
+    console.error("Jikan fetch failed:", error);
+    return [];
+  }
+}
+
+async function fetchJikan(path) {
+  // Add small delay to respect Jikan rate limits (3 requests per second)
+  await new Promise(resolve => setTimeout(resolve, 500));
+  const response = await fetch(`https://api.jikan.moe/v4/${path.replace(/^\/+/, "")}`);
+  if (!response.ok) throw new Error(`Jikan request failed: ${response.status}`);
+  return response.json();
+}
+
+function mapJikanItem(item, tags = []) {
+  const type = item.type === "Movie" ? "movie" : "tv";
+  const id = `jikan:${item.mal_id}`;
+  const title = item.title_english || item.title;
+  const rating = Number(item.score || 0);
+  const matchScore = rating > 0 ? Math.min(99, Math.max(70, Math.round(rating * 10))) : 85;
+  
+  return {
+    id,
+    malId: item.mal_id,
+    type,
+    title,
+    description: item.synopsis || "No description available.",
+    poster: item.images.jpg.large_image_url || item.images.jpg.image_url,
+    backdrop: item.images.jpg.large_image_url || item.images.jpg.image_url,
+    rating,
+    matchScore,
+    year: item.aired?.prop?.from?.year || "",
+    genres: (item.genres || []).map(g => g.name),
+    tags: [...tags, "Anime"],
+    provider: "MyAnimeList"
+  };
+}
+
+async function resolveTmdbIdByTitle(title, type) {
+  console.log(`Resolving TMDB ID for: ${title} (${type})`);
+  try {
+    const results = await searchTmdb(title, type);
+    if (results && results.length > 0) {
+      // Find the best match (closest title)
+      const bestMatch = results.find(r => r.title.toLowerCase() === title.toLowerCase()) || results[0];
+      console.log(`Resolved to TMDB ID: ${bestMatch.id}`);
+      return bestMatch.id;
+    }
+  } catch (error) {
+    console.error("Failed to resolve TMDB ID:", error);
+  }
+  return null;
 }
 
 function mapTmdbItem(item, type, tags, genreOverrides = []) {
@@ -883,12 +948,12 @@ function formatDateTime(timestamp) {
   });
 }
 
-function handleAction(action, key) {
+async function handleAction(action, key) {
   const item = getItem(key);
   if (!item && action !== "library-history" && action !== "library-watchlist") return;
 
   if (action === "details") openDetails(item);
-  if (action === "play") playTitle(item);
+  if (action === "play") await playTitle(item);
   if (action === "watchlist") toggleWatchlist(item);
 }
 
@@ -900,9 +965,10 @@ function renderHome() {
     { title: "Trending Today", items: byTag("trending") },
     { title: "Latest Movies", items: byTag("latest").filter((item) => item.type === "movie") },
     { title: "Top rated", items: catalog.slice().sort((a, b) => b.rating - a.rating).slice(0, 12) },
-    { title: "Movies", items: catalog.filter((item) => item.type === "movie").sort(sortNewestFirst) },
-    { title: "TV Shows", items: catalog.filter((item) => item.type === "tv" && !item.genres.includes("Anime")).sort(sortNewestFirst) },
-    { title: "Anime", items: catalog.filter((item) => item.genres.includes("Anime")).sort(sortNewestFirst) },
+    { title: "Anime Movies", items: catalog.filter((item) => item.genres.includes("Anime") && item.type === "movie").sort(sortNewestFirst) },
+    { title: "Anime Series", items: catalog.filter((item) => item.genres.includes("Anime") && item.type === "tv").sort(sortNewestFirst) },
+    { title: "Movies", items: catalog.filter((item) => item.type === "movie" && !item.genres.includes("Anime")).sort(sortNewestFirst) },
+    { title: "TV Shows", items: catalog.filter((item) => item.type === "tv" && !item.genres.includes("Anime")).sort(sortNewestFirst) }
     { title: "4K", items: catalog.filter((item) => item.quality === "4K") },
     { title: "Netflix", items: catalog.filter((item) => item.provider === "Netflix") }
   ];
@@ -1105,11 +1171,26 @@ function renderRecommendations(item) {
   `).join("");
 }
 
-function playTitle(item, season = 1, episode = 1) {
+async function playTitle(item, season = 1, episode = 1) {
   console.log("playTitle called for:", item?.title, "Type:", item?.type, "ID:", item?.id);
   if (!item) {
     showToast("Error: No title selected.");
     return;
+  }
+
+  // If it's a Jikan item, we need to resolve it to a TMDB ID for Vidking
+  if (item.id.startsWith("jikan:") && !item.tmdbId) {
+    showToast(`Resolving stream for ${item.title}...`);
+    const resolvedId = await resolveTmdbIdByTitle(item.title, item.type);
+    if (resolvedId) {
+      item.tmdbId = resolvedId;
+      // Also update the ID so getLicensedSource uses the right one
+      item.originalId = item.id;
+      item.id = resolvedId;
+    } else {
+      showToast(`Could not find a stream for ${item.title}.`);
+      return;
+    }
   }
 
   const source = getLicensedSource(item, season, episode);
