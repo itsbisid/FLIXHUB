@@ -968,7 +968,7 @@ function renderHome() {
     { title: "Anime Movies", items: catalog.filter((item) => item.genres.includes("Anime") && item.type === "movie").sort(sortNewestFirst) },
     { title: "Anime Series", items: catalog.filter((item) => item.genres.includes("Anime") && item.type === "tv").sort(sortNewestFirst) },
     { title: "Movies", items: catalog.filter((item) => item.type === "movie" && !item.genres.includes("Anime")).sort(sortNewestFirst) },
-    { title: "TV Shows", items: catalog.filter((item) => item.type === "tv" && !item.genres.includes("Anime")).sort(sortNewestFirst) }
+    { title: "TV Shows", items: catalog.filter((item) => item.type === "tv" && !item.genres.includes("Anime")).sort(sortNewestFirst) },
     { title: "4K", items: catalog.filter((item) => item.quality === "4K") },
     { title: "Netflix", items: catalog.filter((item) => item.provider === "Netflix") }
   ];
