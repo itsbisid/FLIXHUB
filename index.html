@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlixHub</title>
+  <meta name="description" content="Browse movies, TV shows, anime, watchlist, and history in FlixHub.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header" id="site-header">
+    <a href="#home" class="brand" data-route="home" aria-label="FlixHub home">
+      <span class="brand-mark">F</span>
+      <span class="brand-name">FlixHub</span>
+    </a>
+
+    <nav class="main-nav" aria-label="Primary navigation">
+      <button class="nav-link active" data-route="home"><i class="fa-solid fa-house"></i><span>Home</span></button>
+      <button class="nav-link" data-filter-type="movie"><i class="fa-solid fa-film"></i><span>Movies</span></button>
+      <button class="nav-link" data-filter-type="tv"><i class="fa-solid fa-tv"></i><span>TV Shows</span></button>
+      <button class="nav-link" data-filter-genre="Anime"><i class="fa-solid fa-dragon"></i><span>Anime</span></button>
+      <button class="nav-link" data-filter-tag="4K"><i class="fa-solid fa-display"></i><span>4K</span></button>
+      <button class="nav-link" data-route="api"><i class="fa-solid fa-code"></i><span>API</span></button>
+      <div class="browse-menu">
+        <button class="nav-link" id="browse-button" aria-expanded="false">
+          <i class="fa-solid fa-grip"></i><span>Browse</span><i class="fa-solid fa-chevron-down chevron"></i>
+        </button>
+        <div class="browse-panel" id="browse-panel" aria-label="Browse menu">
+          <div class="browse-column">
+            <p class="panel-label">Content</p>
+            <button data-filter-type="movie"><i class="fa-solid fa-clapperboard"></i>Movies</button>
+            <button data-filter-type="tv"><i class="fa-solid fa-layer-group"></i>TV Shows</button>
+            <button data-filter-genre="Anime"><i class="fa-solid fa-wand-magic-sparkles"></i>Anime</button>
+          </div>
+          <div class="browse-column">
+            <p class="panel-label">Features</p>
+            <button data-filter-tag="4K"><i class="fa-solid fa-gem"></i>4K</button>
+            <button data-route="watchparty"><i class="fa-solid fa-users"></i>Watch Party</button>
+            <button data-filter-provider="Netflix"><i class="fa-solid fa-n"></i>Netflix</button>
+          </div>
+          <div class="browse-column">
+            <p class="panel-label">Personal</p>
+            <button data-route="watchlist"><i class="fa-solid fa-bookmark"></i>Watchlist</button>
+            <button data-route="history"><i class="fa-solid fa-clock-rotate-left"></i>History</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="header-actions">
+      <button class="icon-button" id="search-open" aria-label="Search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+      </button>
+      <button class="icon-button" id="profile-button" aria-label="Account">
+        <i class="fa-solid fa-user"></i>
+      </button>
+      <button class="icon-button mobile-menu-button" id="mobile-menu-button" aria-label="Menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="view active-view" id="home-view">
+      <section class="hero" id="hero">
+        <img class="hero-image" id="hero-image" alt="">
+        <div class="hero-shade"></div>
+        <div class="hero-content">
+          <p class="eyebrow" id="hero-eyebrow">Trending Today</p>
+          <h1 id="hero-title">FlixHub</h1>
+          <div class="meta-row" id="hero-meta"></div>
+          <p class="hero-copy" id="hero-description"></p>
+          <div class="hero-actions">
+            <button class="primary-action" id="hero-play"><i class="fa-solid fa-play"></i>Play</button>
+            <button class="secondary-action" id="hero-more"><i class="fa-solid fa-circle-info"></i>More Info</button>
+            <button class="round-action" id="hero-watchlist" aria-label="Add to watchlist"><i class="fa-solid fa-plus"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <section class="rail-area" id="rail-area" aria-label="Content rows"></section>
+    </section>
+
+    <section class="view catalog-view" id="catalog-view" aria-label="Catalog">
+      <div class="page-shell">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow" id="catalog-eyebrow">Browse</p>
+            <h1 id="catalog-title">All titles</h1>
+          </div>
+          <button class="secondary-action compact" id="reset-filters"><i class="fa-solid fa-rotate-left"></i>Reset</button>
+        </div>
+
+        <div class="filter-bar">
+          <label>
+            <span>Type</span>
+            <select id="type-filter">
+              <option value="all">All</option>
+              <option value="movie">Movies</option>
+              <option value="tv">TV Shows</option>
+            </select>
+          </label>
+          <label>
+            <span>Genre</span>
+            <select id="genre-filter">
+              <option value="all">All</option>
+            </select>
+          </label>
+          <label>
+            <span>Year</span>
+            <select id="year-filter">
+              <option value="all">All</option>
+            </select>
+          </label>
+          <label>
+            <span>Sort</span>
+            <select id="sort-filter">
+              <option value="trending">Trending</option>
+              <option value="rating">Rating</option>
+              <option value="newest">Newest</option>
+              <option value="title">Title</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="catalog-grid" id="catalog-grid"></div>
+      </div>
+    </section>
+
+    <section class="view library-view" id="library-view" aria-label="Library">
+      <div class="page-shell">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow" id="library-eyebrow">Personal</p>
+            <h1 id="library-title">Watchlist</h1>
+          </div>
+          <button class="secondary-action compact" id="clear-library"><i class="fa-solid fa-trash-can"></i>Clear</button>
+        </div>
+        <div class="catalog-grid" id="library-grid"></div>
+      </div>
+    </section>
+
+    <section class="view utility-view" id="api-view" aria-label="API">
+      <div class="page-shell narrow-shell">
+        <p class="eyebrow">Developer</p>
+        <h1>API</h1>
+        <div class="utility-card">
+          <div class="utility-icon"><i class="fa-solid fa-plug"></i></div>
+          <div>
+            <h2>Catalog API ready</h2>
+            <p>Search, browse, details, watchlist, and history are local modules. Live catalog data uses TMDB when you save a token.</p>
+          </div>
+        </div>
+        <div class="settings-card">
+          <h2>Live Metadata</h2>
+          <p id="tmdb-status">Using the saved local catalog until TMDB is configured.</p>
+          <label>
+            <span>TMDB token or API key</span>
+            <input type="password" id="tmdb-token" placeholder="Paste your TMDB read access token or API key">
+          </label>
+          <div class="settings-actions">
+            <button class="primary-action" id="save-tmdb-token"><i class="fa-solid fa-floppy-disk"></i>Save Token</button>
+            <button class="secondary-action" id="refresh-live-data"><i class="fa-solid fa-rotate"></i>Refresh Now</button>
+            <button class="secondary-action" id="clear-tmdb-token"><i class="fa-solid fa-trash-can"></i>Clear</button>
+          </div>
+        </div>
+        <div class="endpoint-list">
+          <div><span>GET</span><code>/catalog</code></div>
+          <div><span>GET</span><code>/catalog/:id</code></div>
+          <div><span>POST</span><code>/watchlist</code></div>
+          <div><span>POST</span><code>/history</code></div>
+          <div><span>GET</span><code>/metadata/trending</code></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view utility-view" id="watchparty-view" aria-label="Watch Party">
+      <div class="page-shell narrow-shell">
+        <p class="eyebrow">Together</p>
+        <h1>Watch Party</h1>
+        <div class="utility-card">
+          <div class="utility-icon"><i class="fa-solid fa-users"></i></div>
+          <div>
+            <h2>Room service required</h2>
+            <p>Use this page with your backend room service and a licensed source provider.</p>
+          </div>
+        </div>
+        <div class="watchparty-form">
+          <input type="text" id="room-name" placeholder="Room name">
+          <button class="primary-action" id="create-room"><i class="fa-solid fa-plus"></i>Create Room</button>
+          <button class="secondary-action" id="join-room"><i class="fa-solid fa-right-to-bracket"></i>Join by ID</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="profile-panel" id="profile-panel" aria-label="Account panel">
+    <button class="close-button" id="profile-close" aria-label="Close account panel"><i class="fa-solid fa-xmark"></i></button>
+    <div class="profile-avatar"><i class="fa-solid fa-user"></i></div>
+    <h2>Guest</h2>
+    <div class="profile-actions">
+      <button data-route="watchlist"><i class="fa-solid fa-bookmark"></i>Watchlist</button>
+      <button data-route="history"><i class="fa-solid fa-clock-rotate-left"></i>History</button>
+      <button id="export-data"><i class="fa-solid fa-file-export"></i>Export Data</button>
+    </div>
+  </aside>
+
+  <div class="search-overlay" id="search-overlay" aria-hidden="true">
+    <div class="search-box-panel">
+      <div class="search-top">
+        <h2>Search</h2>
+        <div class="search-filter">
+          <span>in</span>
+          <select id="search-type">
+            <option value="all">Movies & TV Shows</option>
+            <option value="movie">Movies</option>
+            <option value="tv">TV Shows</option>
+            <option value="anime">Anime</option>
+          </select>
+        </div>
+        <button class="close-button" id="search-close" aria-label="Close search"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <label class="search-input-wrap">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" id="search-input" placeholder="Type here to search..." autocomplete="off">
+      </label>
+      <div class="recent-searches" id="recent-searches"></div>
+      <div class="search-results" id="search-results"></div>
+    </div>
+  </div>
+
+  <div class="details-overlay" id="details-overlay" aria-hidden="true">
+    <article class="details-modal" id="details-modal">
+      <button class="close-button details-close" id="details-close" aria-label="Close details"><i class="fa-solid fa-xmark"></i></button>
+      <div class="details-hero">
+        <img id="details-image" alt="">
+        <div class="details-gradient"></div>
+      </div>
+      <div class="details-body">
+        <p class="eyebrow" id="details-provider">Featured</p>
+        <h1 id="details-title">Title</h1>
+        <div class="meta-row" id="details-meta"></div>
+        <div class="details-actions">
+          <button class="primary-action" id="details-play"><i class="fa-solid fa-play"></i>Play</button>
+          <button class="round-action" id="details-watchlist" aria-label="Watchlist"><i class="fa-solid fa-plus"></i></button>
+          <button class="round-action" id="details-like" aria-label="Like"><i class="fa-solid fa-thumbs-up"></i></button>
+        </div>
+        <p id="details-description"></p>
+        <div class="genre-pills" id="details-genres"></div>
+        <section>
+          <h2>More Like This</h2>
+          <div class="recommend-grid" id="recommend-grid"></div>
+        </section>
+      </div>
+    </article>
+  </div>
+
+  <div class="player-overlay" id="player-overlay" aria-hidden="true">
+    <div class="player-shell">
+      <div class="player-header">
+        <div>
+          <p class="eyebrow">Now Playing</p>
+          <h2 id="player-title">Title</h2>
+        </div>
+        <button class="close-button" id="player-close" aria-label="Close player"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="player-stage" id="player-stage"></div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+  <script src="config.local.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
