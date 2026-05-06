@@ -839,7 +839,7 @@ function isBearerToken(token) {
 }
 
 function getTmdbToken() {
-  return window.FLIXHUB_TMDB_TOKEN || localStorage.getItem(storageKeys.tmdbToken) || "";
+  return window.FLIXHUB_TMDB_TOKEN || window.FLIXHUB_TMDB_API_KEY || localStorage.getItem(storageKeys.tmdbToken) || "";
 }
 
 function hydrateTmdbControls() {
